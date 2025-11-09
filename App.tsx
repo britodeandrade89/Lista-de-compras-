@@ -23,8 +23,7 @@ const App: React.FC = () => {
   const [activeMonth, setActiveMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
   const [currentShoppingList, setCurrentShoppingList] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-
+  
   useEffect(() => {
     // PWA Service Worker and Install Prompt Logic
     if ('serviceWorker' in navigator) {
@@ -37,7 +36,17 @@ const App: React.FC = () => {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setInstallPrompt(e as BeforeInstallPromptEvent);
+      const promptEvent = e as BeforeInstallPromptEvent;
+      // Trigger the prompt immediately
+      promptEvent.prompt();
+      // Log the user choice
+      promptEvent.userChoice.then(choiceResult => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+      });
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -66,20 +75,6 @@ const App: React.FC = () => {
 
     return () => unsubscribe();
   }, [activeMonth]);
-
-  const handleInstallClick = useCallback(() => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    installPrompt.userChoice.then(choiceResult => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      setInstallPrompt(null);
-    });
-  }, [installPrompt]);
-
 
   const handleMonthChange = useCallback((month: string) => {
     setActiveMonth(month);
@@ -166,18 +161,6 @@ const App: React.FC = () => {
             <h1 className="text-2xl md:text-3xl font-bold">Compras do Mês</h1>
             <p className="text-indigo-200 mt-1">Seu assistente pessoal de orçamento de compras</p>
           </div>
-          {installPrompt && (
-            <button
-              onClick={handleInstallClick}
-              className="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white"
-              aria-label="Instalar aplicativo"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Instalar App
-            </button>
-          )}
         </div>
          <MonthTabs activeMonth={activeMonth} onMonthChange={handleMonthChange} />
       </header>
