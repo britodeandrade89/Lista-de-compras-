@@ -1,0 +1,147 @@
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { ShoppingList } from './components/ShoppingList';
+import { MonthTabs } from './components/MonthTabs';
+import { SummaryBar } from './components/SummaryBar';
+import { AddItemForm } from './components/AddItemForm';
+import { INITIAL_CATEGORIES } from './constants';
+import type { Category, ShoppingItem } from './types';
+import { db } from './firebase/config';
+import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+
+const App: React.FC = () => {
+  const [activeMonth, setActiveMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
+  const [currentShoppingList, setCurrentShoppingList] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const docRef = doc(db, 'shoppingLists', activeMonth);
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setCurrentShoppingList(docSnap.data().categories);
+      } else {
+        // Doc doesn't exist, so we create it with initial data
+        console.log(`No document for ${activeMonth}, creating one.`);
+        setDoc(docRef, { categories: INITIAL_CATEGORIES });
+        // The onSnapshot listener will automatically pick up this change and update the state
+      }
+      setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching document:", error);
+        setIsLoading(false);
+    });
+
+    // Cleanup subscription on unmount or when activeMonth changes
+    return () => unsubscribe();
+  }, [activeMonth]);
+
+
+  const handleMonthChange = useCallback((month: string) => {
+    setActiveMonth(month);
+  }, []);
+  
+  const handleItemChange = useCallback(async (itemId: number, field: keyof ShoppingItem, value: string | number) => {
+    const docRef = doc(db, 'shoppingLists', activeMonth);
+    const newCategories = JSON.parse(JSON.stringify(currentShoppingList));
+    
+    let itemFound = false;
+    for (const category of newCategories) {
+        for (const item of category.items) {
+            if (item.id === itemId) {
+                (item as any)[field] = value;
+                if (field === 'quantity' || field === 'price') {
+                    item.quantity = Number(isNaN(parseFloat(String(item.quantity))) ? 0 : item.quantity);
+                    item.price = Number(isNaN(parseFloat(String(item.price))) ? 0 : item.price);
+                }
+                itemFound = true;
+                break;
+            }
+        }
+        if (itemFound) break;
+    }
+    
+    await updateDoc(docRef, { categories: newCategories });
+  }, [activeMonth, currentShoppingList]);
+
+  const handleDeleteItem = useCallback(async (itemId: number) => {
+    const docRef = doc(db, 'shoppingLists', activeMonth);
+    
+    const newCategories = currentShoppingList.map(category => ({
+        ...category,
+        items: category.items.filter(item => item.id !== itemId)
+    })).filter(category => category.items.length > 0);
+
+    await updateDoc(docRef, { categories: newCategories });
+  }, [activeMonth, currentShoppingList]);
+  
+  const handleAddItem = useCallback(async (newItem: Omit<ShoppingItem, 'id'>, categoryName: string) => {
+    const docRef = doc(db, 'shoppingLists', activeMonth);
+    const newCategories = JSON.parse(JSON.stringify(currentShoppingList));
+    
+    const categoryIndex = newCategories.findIndex((cat: Category) => cat.name.toLowerCase() === categoryName.toLowerCase());
+      
+    const itemToAdd: ShoppingItem = {
+      ...newItem,
+      id: Date.now(),
+    };
+
+    if (categoryIndex > -1) {
+      newCategories[categoryIndex].items.push(itemToAdd);
+    } else {
+      newCategories.push({
+        id: Date.now() + 1,
+        name: categoryName,
+        items: [itemToAdd]
+      });
+    }
+
+    await updateDoc(docRef, { categories: newCategories });
+  }, [activeMonth, currentShoppingList]);
+
+
+  const totalCost = useMemo(() => {
+    if (!currentShoppingList) return 0;
+    return currentShoppingList.reduce((total, category) => {
+      return total + category.items.reduce((categoryTotal, item) => {
+        return categoryTotal + (Number(item.quantity) * Number(item.price));
+      }, 0);
+    }, 0);
+  }, [currentShoppingList]);
+
+  const allCategories = useMemo(() => {
+    if (!currentShoppingList) return [];
+    return [...new Set(currentShoppingList.map(cat => cat.name))];
+  }, [currentShoppingList]);
+
+  return (
+    <div className="min-h-screen font-sans bg-slate-50">
+      <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-5">
+          <h1 className="text-2xl md:text-3xl font-bold">Compras do Mês</h1>
+          <p className="text-indigo-200 mt-1">Seu assistente pessoal de orçamento de compras</p>
+        </div>
+         <MonthTabs activeMonth={activeMonth} onMonthChange={handleMonthChange} />
+      </header>
+      
+      <main className="container mx-auto p-4 pb-24">
+        <AddItemForm onAddItem={handleAddItem} existingCategories={allCategories} />
+        {isLoading ? (
+             <div className="text-center py-10">
+                <p className="text-lg text-gray-500">Carregando sua lista de compras...</p>
+             </div>
+        ) : (
+            <ShoppingList 
+                categories={currentShoppingList} 
+                onItemChange={handleItemChange}
+                onDeleteItem={handleDeleteItem}
+            />
+        )}
+      </main>
+      
+      <SummaryBar total={totalCost} />
+    </div>
+  );
+};
+
+export default App;
