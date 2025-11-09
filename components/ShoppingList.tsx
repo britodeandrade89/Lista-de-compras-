@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Category, ShoppingItem } from '../types';
 import { ShoppingItemRow } from './ShoppingItemRow';
@@ -47,7 +46,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ categories, onItemCh
         const color = categoryColors[index % categoryColors.length];
         return (
             <div key={category.id} className={`bg-white rounded-xl shadow-md overflow-hidden border-l-4 ${color.border}`}>
-            <h2 className={`px-6 py-4 ${color.bg} text-xl font-bold ${color.text} border-b ${color.border} flex items-center`}>
+            <h2 className={`px-6 py-3 ${color.bg} text-xl font-bold ${color.text} border-b ${color.border} flex items-center`}>
                 <CategoryIcon categoryName={category.name} className={color.icon} />
                 {category.name}
             </h2>

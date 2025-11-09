@@ -8,10 +8,44 @@ import type { Category, ShoppingItem } from './types';
 import { db } from './firebase/config';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 
+// Define a type for the BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+
 const App: React.FC = () => {
   const [activeMonth, setActiveMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
   const [currentShoppingList, setCurrentShoppingList] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    // PWA Service Worker and Install Prompt Logic
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => console.log('Service Worker registered: ', registration))
+          .catch(registrationError => console.log('Service Worker registration failed: ', registrationError));
+      });
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -21,10 +55,8 @@ const App: React.FC = () => {
       if (docSnap.exists()) {
         setCurrentShoppingList(docSnap.data().categories);
       } else {
-        // Doc doesn't exist, so we create it with initial data
         console.log(`No document for ${activeMonth}, creating one.`);
         setDoc(docRef, { categories: INITIAL_CATEGORIES });
-        // The onSnapshot listener will automatically pick up this change and update the state
       }
       setIsLoading(false);
     }, (error) => {
@@ -32,9 +64,21 @@ const App: React.FC = () => {
         setIsLoading(false);
     });
 
-    // Cleanup subscription on unmount or when activeMonth changes
     return () => unsubscribe();
   }, [activeMonth]);
+
+  const handleInstallClick = useCallback(() => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    installPrompt.userChoice.then(choiceResult => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setInstallPrompt(null);
+    });
+  }, [installPrompt]);
 
 
   const handleMonthChange = useCallback((month: string) => {
@@ -117,9 +161,23 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen font-sans bg-slate-50">
       <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-5">
-          <h1 className="text-2xl md:text-3xl font-bold">Compras do Mês</h1>
-          <p className="text-indigo-200 mt-1">Seu assistente pessoal de orçamento de compras</p>
+        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Compras do Mês</h1>
+            <p className="text-indigo-200 mt-1">Seu assistente pessoal de orçamento de compras</p>
+          </div>
+          {installPrompt && (
+            <button
+              onClick={handleInstallClick}
+              className="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white"
+              aria-label="Instalar aplicativo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Instalar App
+            </button>
+          )}
         </div>
          <MonthTabs activeMonth={activeMonth} onMonthChange={handleMonthChange} />
       </header>
