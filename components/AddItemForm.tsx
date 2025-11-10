@@ -4,14 +4,15 @@ import type { ShoppingItem } from '../types';
 interface AddItemFormProps {
   onAddItem: (item: Omit<ShoppingItem, 'id'>, category: string) => void;
   existingCategories: string[];
+  isVisible: boolean;
+  setIsVisible: (visible: boolean) => void;
 }
 
-export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCategories }) => {
+export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCategories, isVisible, setIsVisible }) => {
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
   const [category, setCategory] = useState('');
-  const [showForm, setShowForm] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const categoryInputContainerRef = useRef<HTMLDivElement>(null);
 
@@ -43,11 +44,11 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
       return;
     }
     onAddItem({ name, quantity, price }, category);
+    // Reset local form state, parent will handle closing the form
     setName('');
     setQuantity(1);
     setPrice(0);
     setCategory('');
-    setShowForm(false);
     setIsDropdownOpen(false);
   };
   
@@ -63,12 +64,12 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
     setIsDropdownOpen(false);
   };
 
-  if (!showForm) {
+  if (!isVisible) {
       return (
         <div className="container mx-auto px-4">
             <div className="text-center py-4">
                 <button
-                    onClick={() => setShowForm(true)}
+                    onClick={() => setIsVisible(true)}
                     className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,7 +136,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
                 <button type="submit" className="flex-1 justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Adicionar
                 </button>
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button type="button" onClick={() => setIsVisible(false)} className="flex-1 justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Cancelar
                 </button>
             </div>

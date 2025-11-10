@@ -1,4 +1,3 @@
-
 import type { Category } from './types';
 
 let idCounter = 1;
@@ -10,7 +9,7 @@ const createItem = (name: string, quantity: number, price: number) => ({
     price,
 });
 
-export const INITIAL_CATEGORIES: Category[] = [
+const categoriesData: Category[] = [
     {
         id: 1,
         name: "Grãos e Derivados",
@@ -154,3 +153,10 @@ export const INITIAL_CATEGORIES: Category[] = [
         ]
     }
 ];
+
+// Sort items alphabetically within each category
+categoriesData.forEach(category => {
+  category.items.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+});
+
+export const INITIAL_CATEGORIES: Category[] = categoriesData;

@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [currentShoppingList, setCurrentShoppingList] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isAddItemFormVisible, setIsAddItemFormVisible] = useState(false);
   
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -67,10 +68,17 @@ const App: React.FC = () => {
 
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setCurrentShoppingList(docSnap.data().categories);
+        const categoriesFromDb = docSnap.data().categories as Category[];
+        // Sort items within each category for consistent display
+        const sortedCategories = categoriesFromDb.map(category => ({
+          ...category,
+          items: [...category.items].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+        }));
+        setCurrentShoppingList(sortedCategories);
       } else {
         console.log(`No document for ${activeMonth}, creating one.`);
         setDoc(docRef, { categories: INITIAL_CATEGORIES });
+        setCurrentShoppingList(INITIAL_CATEGORIES);
       }
       setIsLoading(false);
     }, (error) => {
@@ -132,6 +140,8 @@ const App: React.FC = () => {
 
     if (categoryIndex > -1) {
       newCategories[categoryIndex].items.push(itemToAdd);
+      // Re-sort the items list to maintain alphabetical order
+      newCategories[categoryIndex].items.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
     } else {
       newCategories.push({
         id: Date.now() + 1,
@@ -141,6 +151,7 @@ const App: React.FC = () => {
     }
 
     await updateDoc(docRef, { categories: newCategories });
+    setIsAddItemFormVisible(false); // Close form after adding
   }, [activeMonth, currentShoppingList]);
 
 
@@ -180,8 +191,13 @@ const App: React.FC = () => {
          <MonthTabs activeMonth={activeMonth} onMonthChange={handleMonthChange} />
       </header>
       
-      <div className="sticky top-0 z-20 bg-slate-50 shadow-sm">
-         <AddItemForm onAddItem={handleAddItem} existingCategories={allCategories} />
+      <div className={`sticky top-0 z-20 transition-all duration-300 ${isAddItemFormVisible ? 'bg-slate-50 shadow-sm' : 'bg-transparent'}`}>
+         <AddItemForm 
+            onAddItem={handleAddItem} 
+            existingCategories={allCategories}
+            isVisible={isAddItemFormVisible}
+            setIsVisible={setIsAddItemFormVisible} 
+        />
       </div>
 
       <main className="container mx-auto p-4 pb-24">
