@@ -20,7 +20,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 
 const App: React.FC = () => {
-  const [activeMonth, setActiveMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
+  const [activeMonth, setActiveMonth] = useState<string>('November');
   const [currentShoppingList, setCurrentShoppingList] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   

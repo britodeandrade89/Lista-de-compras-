@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface MonthTabsProps {
@@ -25,7 +24,7 @@ export const MonthTabs: React.FC<MonthTabsProps> = ({ activeMonth, onMonthChange
 
   return (
     <div className="border-b border-white/20">
-      <nav className="container mx-auto px-4 -mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+      <nav className="container mx-auto px-4 -mb-px flex space-x-6 overflow-x-auto no-scrollbar" aria-label="Tabs">
         {MONTHS.map(month => {
           const isActive = activeMonth === month;
           return (
