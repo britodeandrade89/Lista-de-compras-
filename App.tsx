@@ -7,6 +7,7 @@ import { INITIAL_CATEGORIES } from './constants';
 import type { Category, ShoppingItem } from './types';
 import { db } from './firebase/config';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { Logo } from './components/Logo';
 
 // Define a type for the BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -154,13 +155,12 @@ const App: React.FC = () => {
   }, [currentShoppingList]);
 
   return (
-    <div className="min-h-screen font-sans bg-slate-50">
-      <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Compras do Mês</h1>
-            <p className="text-indigo-200 mt-1">Seu assistente pessoal de orçamento de compras</p>
-          </div>
+    <div className="min-h-screen font-sans bg-gradient-to-b from-black via-indigo-900 to-slate-50">
+      <header className="bg-transparent text-white sticky top-0 z-10">
+        <div className="container mx-auto px-4 pt-8 pb-4 flex flex-col items-center">
+            <Logo className="h-16 w-16 text-white mb-4" />
+            <h1 className="text-4xl md:text-5xl font-extrabold uppercase tracking-widest">Compras do Mês</h1>
+            <p className="text-indigo-300 mt-2">Seu assistente pessoal de orçamento de compras</p>
         </div>
          <MonthTabs activeMonth={activeMonth} onMonthChange={handleMonthChange} />
       </header>
@@ -169,7 +169,7 @@ const App: React.FC = () => {
         <AddItemForm onAddItem={handleAddItem} existingCategories={allCategories} />
         {isLoading ? (
              <div className="text-center py-10">
-                <p className="text-lg text-gray-500">Carregando sua lista de compras...</p>
+                <p className="text-lg text-gray-400">Carregando sua lista de compras...</p>
              </div>
         ) : (
             <ShoppingList 

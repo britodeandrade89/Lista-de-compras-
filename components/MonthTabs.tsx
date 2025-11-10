@@ -24,7 +24,7 @@ export const MonthTabs: React.FC<MonthTabsProps> = ({ activeMonth, onMonthChange
 
   return (
     <div className="border-b border-white/20">
-      <nav className="container mx-auto px-4 -mb-px flex space-x-6 overflow-x-auto no-scrollbar" aria-label="Tabs">
+      <nav className="container mx-auto px-4 py-2 -mb-px flex flex-wrap justify-center gap-x-4 gap-y-1" aria-label="Tabs">
         {MONTHS.map(month => {
           const isActive = activeMonth === month;
           return (
