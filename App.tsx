@@ -19,14 +19,13 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-
 const App: React.FC = () => {
   const [activeMonth, setActiveMonth] = useState<string>('November');
   const [currentShoppingList, setCurrentShoppingList] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   
   useEffect(() => {
-    // PWA Service Worker and Install Prompt Logic
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
@@ -37,17 +36,7 @@ const App: React.FC = () => {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      const promptEvent = e as BeforeInstallPromptEvent;
-      // Trigger the prompt immediately
-      promptEvent.prompt();
-      // Log the user choice
-      promptEvent.userChoice.then(choiceResult => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        } else {
-          console.log('User dismissed the install prompt');
-        }
-      });
+      setInstallPromptEvent(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -56,6 +45,21 @@ const App: React.FC = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  const handleInstallClick = () => {
+    if (!installPromptEvent) {
+      return;
+    }
+    installPromptEvent.prompt();
+    installPromptEvent.userChoice.then(choiceResult => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setInstallPromptEvent(null);
+    });
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -156,17 +160,31 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen font-sans bg-gradient-to-b from-black via-indigo-900 to-slate-50">
-      <header className="bg-transparent text-white sticky top-0 z-10">
+      <header className="bg-transparent text-white">
         <div className="container mx-auto px-4 pt-8 pb-4 flex flex-col items-center">
             <Logo className="h-16 w-16 text-white mb-4" />
             <h1 className="text-4xl md:text-5xl font-extrabold uppercase tracking-widest">Compras do Mês</h1>
             <p className="text-indigo-300 mt-2">Seu assistente pessoal de orçamento de compras</p>
+             {installPromptEvent && (
+              <button
+                onClick={handleInstallClick}
+                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Instalar App
+              </button>
+            )}
         </div>
          <MonthTabs activeMonth={activeMonth} onMonthChange={handleMonthChange} />
       </header>
       
+      <div className="sticky top-0 z-20 bg-slate-50 shadow-sm">
+         <AddItemForm onAddItem={handleAddItem} existingCategories={allCategories} />
+      </div>
+
       <main className="container mx-auto p-4 pb-24">
-        <AddItemForm onAddItem={handleAddItem} existingCategories={allCategories} />
         {isLoading ? (
              <div className="text-center py-10">
                 <p className="text-lg text-gray-400">Carregando sua lista de compras...</p>
