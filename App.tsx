@@ -8,6 +8,8 @@ import type { Category, ShoppingItem } from './types';
 import { db } from './firebase/config';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { Logo } from './components/Logo';
+import { AIAssistantButton } from './components/AIAssistantButton';
+import { AIAssistant } from './components/AIAssistant';
 
 // Define a type for the BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -25,6 +27,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isAddItemFormVisible, setIsAddItemFormVisible] = useState(false);
+  const [isAIAssistantVisible, setIsAIAssistantVisible] = useState(false);
   
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -170,21 +173,21 @@ const App: React.FC = () => {
   }, [currentShoppingList]);
 
   return (
-    <div className="min-h-screen font-sans bg-gradient-to-b from-black via-indigo-900 to-slate-50">
-      <header className="bg-transparent text-white">
+    <div className="min-h-screen font-sans bg-gradient-to-b from-violet-100 to-slate-50">
+      <header className="bg-transparent text-slate-800">
         <div className="container mx-auto px-4 pt-8 pb-4 flex flex-col items-center">
-            <Logo className="h-16 w-16 text-white mb-4" />
-            <h1 className="text-4xl md:text-5xl font-extrabold uppercase tracking-widest">Compras do Mês</h1>
-            <p className="text-indigo-300 mt-2">Seu assistente pessoal de orçamento de compras</p>
+            <Logo className="h-16 w-16 text-slate-800 mb-4" />
+            <h1 className="text-4xl md:text-5xl font-extrabold uppercase tracking-widest text-center">Compras do Mês</h1>
+            <p className="text-violet-700 mt-2 font-semibold">Seu assistente pessoal de orçamento de compras</p>
              {installPromptEvent && (
               <button
                 onClick={handleInstallClick}
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="mt-6 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-transform transform hover:scale-105"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Instalar App
+                Instalar no seu dispositivo
               </button>
             )}
         </div>
@@ -203,7 +206,7 @@ const App: React.FC = () => {
       <main className="container mx-auto p-4 pb-24">
         {isLoading ? (
              <div className="text-center py-10">
-                <p className="text-lg text-gray-400">Carregando sua lista de compras...</p>
+                <p className="text-lg text-gray-500">Carregando sua lista de compras...</p>
              </div>
         ) : (
             <ShoppingList 
@@ -215,6 +218,9 @@ const App: React.FC = () => {
       </main>
       
       <SummaryBar total={totalCost} />
+
+      <AIAssistant isVisible={isAIAssistantVisible} onClose={() => setIsAIAssistantVisible(false)} />
+      {!isAIAssistantVisible && <AIAssistantButton onClick={() => setIsAIAssistantVisible(true)} />}
     </div>
   );
 };

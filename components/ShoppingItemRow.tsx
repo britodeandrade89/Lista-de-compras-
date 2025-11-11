@@ -34,7 +34,7 @@ export const ShoppingItemRow: React.FC<ShoppingItemRowProps> = ({ item, onItemCh
                 <button
                     onClick={() => handleQuantityChange(item.quantity - 1)}
                     disabled={item.quantity <= 0}
-                    className="p-1 md:p-2 border border-gray-300 rounded-l-md text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="p-1 md:p-2 border border-gray-300 rounded-l-md text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-violet-500"
                     aria-label="Diminuir quantidade"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +44,7 @@ export const ShoppingItemRow: React.FC<ShoppingItemRowProps> = ({ item, onItemCh
                 <span className="w-8 md:w-12 text-center p-1 md:p-2 border-t border-b border-gray-300 bg-white font-medium text-gray-800 select-none text-sm">{item.quantity}</span>
                 <button
                     onClick={() => handleQuantityChange(item.quantity + 1)}
-                    className="p-1 md:p-2 border border-gray-300 rounded-r-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="p-1 md:p-2 border border-gray-300 rounded-r-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
                     aria-label="Aumentar quantidade"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,7 +59,7 @@ export const ShoppingItemRow: React.FC<ShoppingItemRowProps> = ({ item, onItemCh
                 name="price"
                 value={item.price}
                 onChange={handleInputChange}
-                className="w-full p-1 md:p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-center text-sm"
+                className="w-full p-1 md:p-2 border border-gray-300 rounded-md shadow-sm focus:ring-violet-500 focus:border-violet-500 text-center text-sm"
                 min="0"
                 step="0.01"
             />

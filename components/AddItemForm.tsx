@@ -70,7 +70,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
             <div className="text-center py-4">
                 <button
                     onClick={() => setIsVisible(true)}
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -94,7 +94,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
                 placeholder="Ex: Leite Integral"
                 required
               />
@@ -107,7 +107,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
                 value={category}
                 onChange={handleCategoryChange}
                 onFocus={() => setIsDropdownOpen(true)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
                 placeholder="Ex: Laticínios"
                 required
                 autoComplete="off"
@@ -118,7 +118,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
                     filteredCategories.map((cat, index) => (
                       <li 
                         key={index} 
-                        className="px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-indigo-50 hover:text-indigo-900"
+                        className="px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-violet-50 hover:text-violet-900"
                         onClick={() => handleCategorySelect(cat)}
                       >
                         {cat}
@@ -133,10 +133,10 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, existingCat
               )}
             </div>
             <div className="flex gap-4">
-                <button type="submit" className="flex-1 justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button type="submit" className="flex-1 justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
                 Adicionar
                 </button>
-                <button type="button" onClick={() => setIsVisible(false)} className="flex-1 justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button type="button" onClick={() => setIsVisible(false)} className="flex-1 justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
                 Cancelar
                 </button>
             </div>

@@ -2,16 +2,10 @@ const CACHE_NAME = 'compras-do-mes-cache-v1';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
-  '/index.tsx',
-  '/App.tsx',
   '/manifest.json',
   '/icon.svg',
-  // Adicione outros recursos estáticos que você deseja cachear
-  'https://cdn.tailwindcss.com',
-  'https://aistudiocdn.com/react@^19.2.0',
-  'https://aistudiocdn.com/react-dom@^19.2.0/client',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
+  // The main script for tailwind is also essential for the app shell
+  'https://cdn.tailwindcss.com'
 ];
 
 self.addEventListener('install', (event) => {
@@ -66,7 +60,7 @@ self.addEventListener('fetch', (event) => {
         return fetch(event.request).then(
           (networkResponse) => {
             // Se a resposta da rede for válida, clona, armazena em cache e retorna
-            if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && !event.request.url.startsWith('https://')) {
               return networkResponse;
             }
 
@@ -80,11 +74,6 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           }
         );
-      })
-      .catch(() => {
-        // Se tanto o cache quanto a rede falharem
-        // você pode retornar uma página de fallback offline aqui
-        console.log('Fetch failed; returning offline page if available.');
       })
   );
 });
