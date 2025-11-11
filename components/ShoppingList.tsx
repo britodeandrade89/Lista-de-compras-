@@ -6,6 +6,8 @@ interface ShoppingListProps {
   categories: Category[];
   onItemChange: (itemId: number, field: keyof ShoppingItem, value: string | number) => void;
   onDeleteItem: (itemId: number) => void;
+  estimations: Map<string, { quantity: number; unit: string }>;
+  meatEstimateKg: number;
 }
 
 const categoryColors = [
@@ -37,7 +39,7 @@ const CategoryIcon: React.FC<CategoryIconProps> = ({ categoryName, className }) 
      return <svg xmlns="http://www.w3.org/2000/svg" className={iconClasses} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>;
 };
 
-export const ShoppingList: React.FC<ShoppingListProps> = ({ categories, onItemChange, onDeleteItem }) => {
+export const ShoppingList: React.FC<ShoppingListProps> = ({ categories, onItemChange, onDeleteItem, estimations, meatEstimateKg }) => {
   if (categories.length === 0) {
     return (
       <div className="text-center py-10 px-4 bg-white rounded-xl shadow-md">
@@ -54,39 +56,55 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ categories, onItemCh
     <div>
         {/* Desktop Header */}
         <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 rounded-t-lg border-b">
-            <div className="col-span-6">Produto</div>
-            <div className="col-span-2 text-center">Qtd.</div>
+            <div className="col-span-4">Produto</div>
+            <div className="col-span-2 text-center">Qtd. Atual</div>
+            <div className="col-span-2 text-center">Qtd. Estimada</div>
             <div className="col-span-2 text-center">Preço Unit.</div>
             <div className="col-span-1 text-center">Subtotal</div>
             <div className="col-span-1 text-right">Ações</div>
         </div>
         {/* Mobile Header */}
         <div className="grid md:hidden grid-cols-12 gap-x-1 px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 rounded-t-lg border-b">
-            <div className="col-span-4 text-left">Produto</div>
-            <div className="col-span-3">Qtd.</div>
+            <div className="col-span-3 text-left">Produto</div>
+            <div className="col-span-2">Qtd. Atual</div>
+            <div className="col-span-2">Qtd. Estimada</div>
             <div className="col-span-2">Preço</div>
             <div className="col-span-2">Subtotal</div>
             <div className="col-span-1"></div>
         </div>
 
-        {categories.map((category, index) => (
-            <div key={category.id} className="mb-2 border-t first:border-t-0">
-            <div className={`flex items-center p-3 ${categoryColors[index % categoryColors.length].bg} ${categoryColors[index % categoryColors.length].border}`}>
-                <CategoryIcon categoryName={category.name} className={categoryColors[index % categoryColors.length].icon} />
-                <h2 className={`text-xl font-bold ${categoryColors[index % categoryColors.length].text}`}>{category.name}</h2>
-            </div>
-            <div className="bg-white rounded-b-lg shadow-sm">
-                {category.items.map(item => (
-                <ShoppingItemRow 
-                    key={item.id} 
-                    item={item} 
-                    onItemChange={onItemChange}
-                    onDeleteItem={onDeleteItem}
-                />
-                ))}
-            </div>
-            </div>
-        ))}
+        {categories.map((category, index) => {
+            let categoryInfo = null;
+            if (category.name.toLowerCase() === 'carnes' && estimations.size > 0) {
+                const totalOnList = category.items.reduce((sum, item) => sum + Number(item.quantity), 0);
+                categoryInfo = (
+                    <span className="ml-4 text-sm font-normal normal-case text-gray-600">
+                        (Adicionado: {totalOnList.toFixed(1)}kg de {meatEstimateKg.toFixed(1)}kg estimados)
+                    </span>
+                );
+            }
+
+            return (
+                <div key={category.id} className="mb-2 border-t first:border-t-0">
+                <div className={`flex items-center p-3 ${categoryColors[index % categoryColors.length].bg} ${categoryColors[index % categoryColors.length].border}`}>
+                    <CategoryIcon categoryName={category.name} className={categoryColors[index % categoryColors.length].icon} />
+                    <h2 className={`text-xl font-bold ${categoryColors[index % categoryColors.length].text}`}>{category.name}</h2>
+                    {categoryInfo}
+                </div>
+                <div className="bg-white rounded-b-lg shadow-sm">
+                    {category.items.map(item => (
+                    <ShoppingItemRow 
+                        key={item.id} 
+                        item={item} 
+                        onItemChange={onItemChange}
+                        onDeleteItem={onDeleteItem}
+                        estimation={estimations.get(item.name.toLowerCase())}
+                    />
+                    ))}
+                </div>
+                </div>
+            );
+        })}
     </div>
   );
 };

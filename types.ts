@@ -11,3 +11,9 @@ export interface Category {
   name: string;
   items: ShoppingItem[];
 }
+
+export interface Estimation {
+  name: string;
+  estimatedQuantity: number;
+  unit: string;
+}

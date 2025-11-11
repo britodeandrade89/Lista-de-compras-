@@ -1,147 +1,130 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat } from '@google/genai';
+import React, { useState, useEffect } from 'react';
 
 interface AIAssistantProps {
-  isVisible: boolean;
+  isOpen: boolean;
   onClose: () => void;
+  onGenerate: () => void;
+  estimations: [string, { quantity: number; unit: string }][];
+  isLoading: boolean;
+  onAddItems: (items: { name: string; quantity: number }[]) => void;
 }
 
-interface Message {
-  role: 'user' | 'model';
-  text: string;
-}
-
-export const AIAssistant: React.FC<AIAssistantProps> = ({ isVisible, onClose }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const chatRef = useRef<Chat | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const modalContentRef = useRef<HTMLDivElement>(null);
+export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, onGenerate, estimations, isLoading, onAddItems }) => {
+  const [quantities, setQuantities] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
-    if (isVisible) {
-      // Initialize Gemini Chat
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-      chatRef.current = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-          systemInstruction: 'Você é um assistente de compras prestativo. Seu objetivo é ajudar os usuários com o planejamento de suas compras de supermercado, fornecendo dicas sobre quantidades, receitas e estratégias para economizar. Mantenha suas respostas concisas e práticas para alguém em um supermercado.',
-        },
+    if (estimations.length > 0) {
+      const newQuantities = new Map<string, number>();
+      estimations.forEach(([name, details]) => {
+        newQuantities.set(name, details.quantity);
       });
-      // Add initial message from assistant
-      setMessages([{
-        role: 'model',
-        text: 'Olá! Como posso te ajudar com suas compras hoje?'
-      }]);
-    } else {
-        // Clear state when closing
-        setMessages([]);
-        setInput('');
-        setIsLoading(false);
+      setQuantities(newQuantities);
     }
-  }, [isVisible]);
-  
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [estimations]);
+
+  const handleQuantityChange = (name: string, value: string) => {
+    const newQuantities = new Map(quantities);
+    const numValue = parseInt(value, 10);
+    newQuantities.set(name, isNaN(numValue) ? 0 : numValue);
+    setQuantities(newQuantities);
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalContentRef.current && !modalContentRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-    if (isVisible) {
-        document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isVisible, onClose]);
-
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || !chatRef.current || isLoading) return;
-
-    const userMessage: Message = { role: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      const response = await chatRef.current.sendMessage({ message: currentInput });
-      const modelMessage: Message = { role: 'model', text: response.text };
-      setMessages(prev => [...prev, modelMessage]);
-    } catch (error) {
-      console.error("Gemini API error:", error);
-      const errorMessage: Message = { role: 'model', text: 'Desculpe, não consegui processar sua solicitação. Tente novamente.' };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleAddClick = () => {
+    const itemsToAdd = Array.from(quantities.entries())
+      .map(([name, quantity]) => ({ name, quantity }))
+      .filter(item => item.quantity > 0);
+    
+    onAddItems(itemsToAdd);
   };
-
-  if (!isVisible) {
-    return null;
-  }
+  
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-end p-0 md:p-4 transition-opacity duration-300" aria-modal="true" role="dialog">
-      <div ref={modalContentRef} className="bg-slate-50 w-full max-w-2xl h-[90vh] md:h-[80vh] md:rounded-2xl shadow-xl flex flex-col transform transition-transform duration-300 translate-y-0">
-        <header className="flex items-center justify-between p-4 border-b border-gray-200 bg-white md:rounded-t-2xl">
-          <div className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-            <h2 className="text-lg font-semibold text-gray-800">Assistente IA</h2>
-          </div>
-          <button onClick={onClose} className="p-2 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col m-4">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+            Assistente de Compras IA
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
-        </header>
+        </div>
 
-        <main className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg, index) => (
-            <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-              {msg.role === 'model' && <div className="w-8 h-8 rounded-full bg-violet-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">AI</div>}
-              <div className={`max-w-xs md:max-w-md px-4 py-2 rounded-2xl ${msg.role === 'user' ? 'bg-violet-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'}`}>
-                 <p className="text-sm" dangerouslySetInnerHTML={{__html: msg.text.replace(/\n/g, '<br />') }} />
+        <div className="p-6 overflow-y-auto">
+          {isLoading ? (
+            <div className="text-center py-10">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">A IA está calculando sua lista ideal... Isso pode levar alguns segundos.</p>
+            </div>
+          ) : estimations.length > 0 ? (
+            <div>
+              <p className="text-sm text-gray-600 mb-4">
+                Ajuste as quantidades conforme necessário e adicione os itens à sua lista de compras.
+              </p>
+              <div className="max-h-80 overflow-y-auto pr-2 border rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estimativa IA</th>
+                            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adicionar à Lista</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {estimations.map(([name, details]) => (
+                        <tr key={name}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">{name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{details.quantity} {details.unit}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <input
+                                    type="number"
+                                    value={quantities.get(name) || 0}
+                                    onChange={(e) => handleQuantityChange(name, e.target.value)}
+                                    className="w-24 p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                                    min="0"
+                                />
+                            </td>
+                        </tr>
+                        ))}
+                    </tbody>
+                </table>
               </div>
             </div>
-          ))}
-          {isLoading && (
-             <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-violet-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">AI</div>
-                 <div className="max-w-xs md:max-w-md px-4 py-3 rounded-2xl bg-white text-gray-800 border border-gray-200 rounded-bl-none flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-violet-300 rounded-full animate-pulse [animation-delay:-0.3s]"></span>
-                    <span className="w-2 h-2 bg-violet-300 rounded-full animate-pulse [animation-delay:-0.15s]"></span>
-                    <span className="w-2 h-2 bg-violet-300 rounded-full animate-pulse"></span>
-                </div>
+          ) : (
+             <div className="text-center">
+                <p className="text-gray-700 mb-4">
+                    Receba uma estimativa personalizada de quanto comprar de cada item para o mês, com base nos hábitos de consumo da sua família.
+                </p>
+                <button
+                    onClick={onGenerate}
+                    className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                    Gerar Estimativa Mensal
+                </button>
             </div>
           )}
-          <div ref={messagesEndRef} />
-        </main>
+        </div>
 
-        <footer className="p-4 bg-white border-t border-gray-200">
-          <form onSubmit={handleSend} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Digite sua pergunta aqui..."
-              className="flex-1 block w-full px-4 py-2 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
-              disabled={isLoading}
-            />
-            <button type="submit" disabled={isLoading || !input.trim()} className="p-2 text-white bg-violet-600 rounded-full hover:bg-violet-700 disabled:bg-violet-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" transform="rotate(90)"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-            </button>
-          </form>
-        </footer>
+        <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
+          <button 
+            onClick={onClose} 
+            className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Fechar
+          </button>
+          {estimations.length > 0 && !isLoading && (
+             <button
+                onClick={handleAddClick}
+                className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+             >
+                Adicionar Itens à Lista
+             </button>
+          )}
+        </div>
       </div>
     </div>
   );

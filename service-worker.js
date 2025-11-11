@@ -1,11 +1,17 @@
-const CACHE_NAME = 'compras-do-mes-cache-v2'; // Bumped version
+const CACHE_NAME = 'compras-do-mes-cache-v1';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
+  '/index.tsx',
+  '/App.tsx',
   '/manifest.json',
   '/icon.svg',
-  // The main script for tailwind is also essential for the app shell
-  'https://cdn.tailwindcss.com'
+  // Adicione outros recursos estáticos que você deseja cachear
+  'https://cdn.tailwindcss.com',
+  'https://aistudiocdn.com/react@^19.2.0',
+  'https://aistudiocdn.com/react-dom@^19.2.0/client',
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -14,11 +20,11 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        // addAll is atomic: if one request fails, the whole operation fails.
         return cache.addAll(URLS_TO_CACHE);
       })
-      // By removing .catch(), if addAll fails, the promise will reject,
-      // and the service worker installation will correctly fail and retry later.
+      .catch(err => {
+        console.error('Failed to cache', err);
+      })
   );
   self.skipWaiting();
 });
@@ -42,38 +48,43 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Let the browser handle non-GET requests and prevent caching of Firestore API calls.
-  if (event.request.method !== 'GET' || event.request.url.includes('firestore.googleapis.com')) {
+  // Ignora requisições que não são GET
+  if (event.request.method !== 'GET') {
     return;
   }
 
-  // Use a "cache-first, then network" strategy for all other assets.
+  // Estratégia: Cache-first, depois network.
   event.respondWith(
     caches.match(event.request)
-      .then((cachedResponse) => {
-        // If the resource is in the cache, return it.
-        if (cachedResponse) {
-          return cachedResponse;
+      .then((response) => {
+        if (response) {
+          // Retorna do cache se encontrado
+          return response;
         }
-
-        // If the resource is not in the cache, fetch it from the network.
+        
+        // Se não estiver no cache, busca na rede
         return fetch(event.request).then(
           (networkResponse) => {
-            // A response is a stream and can only be consumed once.
-            // We need to clone it to have one copy for the browser and one for the cache.
+            // Se a resposta da rede for válida, clona, armazena em cache e retorna
+            if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+
             const responseToCache = networkResponse.clone();
 
             caches.open(CACHE_NAME)
               .then((cache) => {
-                // Cache the fetched resource.
-                // This logic correctly handles opaque responses from CDNs.
                 cache.put(event.request, responseToCache);
               });
 
-            // Return the network response to the browser.
             return networkResponse;
           }
         );
+      })
+      .catch(() => {
+        // Se tanto o cache quanto a rede falharem
+        // você pode retornar uma página de fallback offline aqui
+        console.log('Fetch failed; returning offline page if available.');
       })
   );
 });
