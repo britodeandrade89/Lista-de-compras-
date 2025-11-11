@@ -1,11 +1,16 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getFirestore } from 'firebase/firestore';
+// import { initializeApp } from "firebase/app";
+// import { getFirestore } from 'firebase/firestore';
+
+// NOTE: Firebase initialization has been disabled because the provided API key
+// in the configuration was invalid, causing a fatal error that prevented the
+// application from loading. The app will now run in a local-only mode
+// without data persistence.
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDrwC791rplIiqOeXKZTlCaacM8YhKkQdw",
+  apiKey: "AIzaSyDrwC791rplIiqOeXKZTlCaacM8YhKkQdw_INVALID",
   authDomain: "lista-de-compras-4420b.firebaseapp.com",
   projectId: "lista-de-compras-4420b",
   storageBucket: "lista-de-compras-4420b.appspot.com",
@@ -15,7 +20,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// const app = initializeApp(firebaseConfig);
 
 // Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+export const db = null;
