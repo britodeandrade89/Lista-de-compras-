@@ -54,18 +54,19 @@ const App: React.FC = () => {
   }, []);
 
   const handleInstallClick = () => {
-    if (!installPromptEvent) {
-      return;
+    if (installPromptEvent) {
+      installPromptEvent.prompt();
+      installPromptEvent.userChoice.then(choiceResult => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        setInstallPromptEvent(null);
+      });
+    } else {
+      alert('A instalação do aplicativo não está disponível neste navegador ou o aplicativo já foi instalado.');
     }
-    installPromptEvent.prompt();
-    installPromptEvent.userChoice.then(choiceResult => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      setInstallPromptEvent(null);
-    });
   };
 
   useEffect(() => {
@@ -296,17 +297,16 @@ const App: React.FC = () => {
   const meatEstimateKg = useMemo(() => (0.3 * 2 * 31), []);
 
   return (
-    <div className="min-h-screen font-sans bg-gradient-to-b from-black via-indigo-900 to-slate-50">
-      <header className="bg-transparent text-white">
+    <div className="min-h-screen font-sans bg-gradient-to-b from-violet-400 to-white">
+      <header className="bg-transparent text-slate-800">
         <div className="container mx-auto px-4 pt-8 pb-4 flex flex-col items-center">
-            <Logo className="h-16 w-16 text-white mb-4" />
+            <Logo className="h-16 w-16 mb-4" />
             <h1 className="text-4xl md:text-5xl font-bold">Compras do Mês</h1>
             <div className="flex items-center gap-4">
-                <p className="text-indigo-300 mt-2">Seu assistente pessoal de orçamento de compras</p>
+                <p className="text-violet-700 mt-2">Seu assistente pessoal de orçamento de compras</p>
             </div>
             <div className="flex gap-4 mt-4">
-                 {installPromptEvent && (
-                  <button
+                 <button
                     onClick={handleInstallClick}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
@@ -315,7 +315,6 @@ const App: React.FC = () => {
                     </svg>
                     Instalar App
                   </button>
-                )}
                 <button
                     onClick={() => setIsAIAssistantOpen(true)}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"

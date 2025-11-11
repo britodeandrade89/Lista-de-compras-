@@ -23,7 +23,7 @@ export const MonthTabs: React.FC<MonthTabsProps> = ({ activeMonth, onMonthChange
   const displayMonths = Array.from({ length: 12 }, (_, i) => MONTHS[(currentMonthIndex + i) % 12]);
 
   return (
-    <div className="border-b border-white/20">
+    <div className="border-b border-violet-200">
       <nav className="container mx-auto px-4 py-2 -mb-px flex flex-wrap justify-center gap-x-4 gap-y-1" aria-label="Tabs">
         {MONTHS.map(month => {
           const isActive = activeMonth === month;
@@ -33,8 +33,8 @@ export const MonthTabs: React.FC<MonthTabsProps> = ({ activeMonth, onMonthChange
               onClick={() => onMonthChange(month)}
               className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-200
                 ${isActive
-                  ? 'border-white text-white'
-                  : 'border-transparent text-indigo-200 hover:text-white hover:border-white/50'
+                  ? 'border-violet-600 text-violet-700'
+                  : 'border-transparent text-gray-500 hover:text-violet-700 hover:border-violet-300'
                 }`}
             >
               {PT_BR_MONTHS_ABBR[month]}
